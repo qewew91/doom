@@ -202,6 +202,7 @@ void draw3D()
 {
 	int s;
 	int w;
+	int loop;
 	int wx[4], wy[4], wz[4];
 	float COS = M.cos[P.a], SIN = M.sin[P.a];
 
@@ -217,54 +218,65 @@ void draw3D()
 
 	for (s = 0; s < numSect; s++) {
 		S[s].d = 0;
-		for (w = S[s].ws; w < S[s].we; w++) {
-			int x1 = W[w].x1 - P.x;
-			int y1 = W[w].y1 - P.y;
-			int x2 = W[w].x2 - P.x;
-			int y2 = W[w].y2 - P.y;
+		for (loop = 0; loop < 2; loop++) {
+			for (w = S[s].ws; w < S[s].we; w++) {
+				int x1 = W[w].x1 - P.x;
+				int y1 = W[w].y1 - P.y;
+				int x2 = W[w].x2 - P.x;
+				int y2 = W[w].y2 - P.y;
 
-			wx[0] = x1 * COS - y1 * SIN;
-			wx[1] = x2 * COS - y2 * SIN;
-			wx[2] = wx[0];
-			wx[3] = wx[1];
+				if (loop == 0) {
+					int swp = x1;
+					x1 = x2;
+					x2 = swp;
+					swp = y1;
+					y1 = y2;
+					y2 = swp;
+				}
 
-			wy[0] = y1 * COS + x1 * SIN;
-			wy[1] = y2 * COS + x2 * SIN;
-			wy[2] = wy[0];
-			wy[3] = wy[1];
+				wx[0] = x1 * COS - y1 * SIN;
+				wx[1] = x2 * COS - y2 * SIN;
+				wx[2] = wx[0];
+				wx[3] = wx[1];
 
-			S[s].d += dist(0, 0, (wx[0] + wx[1]) / 2, (wy[0] + wy[1]) / 2);
+				wy[0] = y1 * COS + x1 * SIN;
+				wy[1] = y2 * COS + x2 * SIN;
+				wy[2] = wy[0];
+				wy[3] = wy[1];
 
-			wz[0] = 0 - P.z + ((P.l * wy[0]) / 32.0);
-			wz[1] = 0 - P.z + ((P.l * wy[1]) / 32.0);
-			wz[2] = wz[0] + S[s].z2;
-			wz[3] = wz[1] + S[s].z2;
+				S[s].d += dist(0, 0, (wx[0] + wx[1]) / 2, (wy[0] + wy[1]) / 2);
 
-			if (wy[0] < 1 && wy[1] < 1)
-				continue;
+				wz[0] = 0 - P.z + ((P.l * wy[0]) / 32.0);
+				wz[1] = 0 - P.z + ((P.l * wy[1]) / 32.0);
+				wz[2] = wz[0] + S[s].z2;
+				wz[3] = wz[1] + S[s].z2;
 
-			if (wy[0] < 1)
-			{
-				clipBehindPlayer(&wx[0], &wy[0], &wz[0], wx[1], wy[1], wz[1]);
-				clipBehindPlayer(&wx[2], &wy[2], &wz[2], wx[3], wy[3], wz[3]);
+				if (wy[0] < 1 && wy[1] < 1)
+					continue;
+
+				if (wy[0] < 1)
+				{
+					clipBehindPlayer(&wx[0], &wy[0], &wz[0], wx[1], wy[1], wz[1]);
+					clipBehindPlayer(&wx[2], &wy[2], &wz[2], wx[3], wy[3], wz[3]);
+				}
+
+				if (wy[1] < 1)
+				{
+					clipBehindPlayer(&wx[1], &wy[1], &wz[1], wx[0], wy[0], wz[0]);
+					clipBehindPlayer(&wx[3], &wy[3], &wz[3], wx[2], wy[2], wz[2]);
+				}
+
+				wx[0] = wx[0] * 200 / wy[0] + SW2;
+				wx[1] = wx[1] * 200 / wy[1] + SW2;
+				wy[0] = wz[0] * 200 / wy[0] + SH2;
+				wy[1] = wz[1] * 200 / wy[1] + SH2;
+				wx[2] = wx[2] * 200 / wy[2] + SW2;
+				wx[3] = wx[3] * 200 / wy[3] + SW2;
+				wy[2] = wz[2] * 200 / wy[2] + SH2;
+				wy[3] = wz[3] * 200 / wy[3] + SH2;
+
+				drawWall(wx[0], wx[1], wy[0], wy[1], wy[2], wy[3], W[w].c);
 			}
-
-			if (wy[1] < 1)
-			{
-				clipBehindPlayer(&wx[1], &wy[1], &wz[1], wx[0], wy[0], wz[0]);
-				clipBehindPlayer(&wx[3], &wy[3], &wz[3], wx[2], wy[2], wz[2]);
-			}
-
-			wx[0] = wx[0] * 200 / wy[0] + SW2;
-			wx[1] = wx[1] * 200 / wy[1] + SW2;
-			wy[0] = wz[0] * 200 / wy[0] + SH2;
-			wy[1] = wz[1] * 200 / wy[1] + SH2;
-			wx[2] = wx[2] * 200 / wy[2] + SW2;
-			wx[3] = wx[3] * 200 / wy[3] + SW2;
-			wy[2] = wz[2] * 200 / wy[2] + SH2;
-			wy[3] = wz[3] * 200 / wy[3] + SH2;
-
-			drawWall(wx[0], wx[1], wy[0], wy[1], wy[2], wy[3], W[w].c);
 		}
 		S[s].d /= (S[s].we - S[s].ws);
 	}
